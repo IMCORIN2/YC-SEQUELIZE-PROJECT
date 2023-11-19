@@ -16,10 +16,9 @@ module.exports = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(authToken, "sparta-secret-key");
-        
         const user = await User.findOne({where:{id :decoded.userId}});
        
-        // res.locals.user = user;
+        res.locals.user = user;
         req.user = user.id
         next();
 
@@ -31,6 +30,6 @@ module.exports = async (req, res, next) => {
         })
     }
 
-    res.send();
-    return;
+    // res.send();
+    // return;
 }

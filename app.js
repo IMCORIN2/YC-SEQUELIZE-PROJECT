@@ -82,6 +82,7 @@ const authMiddleware = require("./middlewares/auth-middleware.js");
 
 // 인증 성공시 /me 경로에 내 정보 전달
 app.post("/users/me", authMiddleware, async (req, res)=>{
+
     res.send({ user : res.locals.user })
 })
 
@@ -91,21 +92,123 @@ app.post("/goods", authMiddleware, async (req, res)=> {
     
     const {authorization} = req.headers;
     const [authType, authToken] = authorization.split(" ");
-    const { userId } = jwt.verify(authToken, "sparta-secret-key");
+    const decoded = jwt.verify(authToken, "sparta-secret-key");
 
     const newGood = { 
         productName : productName,
         content : content,
         status : status,
-        userId : userId
+        userId : decoded.userId
     }
-
+    
     const good = await Goods.build(newGood);
     await good.save();
      // const user = awiat User.create(newUser);
-    res.status(201).send({ newGood} )
+    res.status(201).send({ newGood })
 })
 
+// 상품 수정
+app.put("/goods/:id/:productId", authMiddleware, async (req, res)=>{
+    const { id, productId } = req.params;
+    const newGoodInfo = req.body;
+
+    const {authorization} = req.headers;
+    const [authType, authToken] = authorization.split(" ");
+    const decoded = jwt.verify(authToken, "sparta-secret-key");
+
+    const existGood = await Goods.findOne({ where : { id : productId } })
+    
+    if(!existGood) {
+        res.status(404).send({ message : "상품 조회에 실패하였습니다."})
+        return;
+    }
+
+    if(decoded.userId !== id) {
+        res.status(404).send({ message : "사용자가 등록한 상품이 없습니다."})
+    } else {
+        const updatedGood = await Goods.update(newGoodInfo, { where : { id : productId } });
+
+        res.status(200).send({ message : `${updatedGood[0]}번 상품이 정상적으로 수정되었습니다.`})
+    }
+    // 사용자의 id를 params로 받아오는게 아니라면 (/goods/:productId만 있다면)
+    // const good = await Goods.findOne({ where : { id : productId } });
+    // const id = good.userId;
+    // const { productId } = req.params;
+
+    // const {authorization} = req.headers;
+    // const [authType, authToken] = authorization.split(" ");
+    // const decoded = jwt.verify(authToken, "sparta-secret-key");
+    // const existGood = await Goods.findOne({ where : { id : productId } })
+    
+    // if(!existGood) {
+    //     res.status(404).send({ message : "상품 조회에 실패하였습니다."})
+    //     return;
+    // }
+
+    // if(decoded.userId !== id) {
+    //     res.status(404).send({ message : "사용자가 등록한 상품이 없습니다."})
+    // } else {
+    //     const updatedGood = await Goods.update({ where : { id : productId} });
+
+    //     res.status(200).send({ message : `${updatedGood[0]}번 상품이 정상적으로 삭제되었습니다.`})
+    // }
+})
+
+// 상품 삭제
+app.delete("/goods/:id/:productId", authMiddleware, async (req, res)=>{
+    const { id , productId } = req.params;
+
+    const {authorization} = req.headers;
+    const [authType, authToken] = authorization.split(" ");
+    const decoded = jwt.verify(authToken, "sparta-secret-key");
+
+    const existGood = await Goods.findOne({ where : { id : productId } })
+    
+    if(!existGood) {
+        res.status(404).send({ message : "상품 조회에 실패하였습니다."})
+        return;
+    }
+
+    if(decoded.userId !== id) {
+        res.status(404).send({ message : "사용자가 등록한 상품이 없습니다."})
+    } else {
+        const deleteGood = await Goods.destroy({ where : { id : productId} });
+
+        res.status(200).send({ message : `${deleteGood}번 상품이 정상적으로 삭제되었습니다.`})
+    }
+    // 사용자의 id를 params로 받아오는게 아니라면 (/goods/:productId만 있다면)
+    // const good = await Goods.findOne({ where : { id : productId } });
+    // const id = good.userId;
+    // const { productId } = req.params;
+
+    // const {authorization} = req.headers;
+    // const [authType, authToken] = authorization.split(" ");
+    // const decoded = jwt.verify(authToken, "sparta-secret-key");
+    // const existGood = await Goods.findOne({ where : { id : productId } })
+    
+    // if(!existGood) {
+    //     res.status(404).send({ message : "상품 조회에 실패하였습니다."})
+    //     return;
+    // }
+
+    // if(decoded.userId !== id) {
+    //     res.status(404).send({ message : "사용자가 등록한 상품이 없습니다."})
+    // } else {
+    //     const deleteGood = await Goods.destroy({ where : { id : productId} });
+
+    //     res.status(200).send({ message : `${deleteGood}번 상품이 정상적으로 삭제되었습니다.`})
+    // }
+
+})
+
+// 상품 상세 조회
+app.get("/goods", async(req, res)=>{
+    // 여기서 작성자명까지 표시해야 하는데 표시하려면 Table간의 Join이 필요하다.
+    // Table Join 후에 QueryString으로 sort 항목을 받아서 정렬을 해주어야 한다.
+    const allGoods = await Goods.findAll();
+
+    res.send(allGoods);
+})
 
 app.listen(3000,(req, res)=>{
     console.log("Server is listening...");
