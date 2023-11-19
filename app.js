@@ -2,11 +2,16 @@ const express = require("express");
 const app = express();
 const db = require("./models/index.js");
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 const { User } = db;
+const { Goods } = db;
 
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static("assets"));
 
 // user 기본화면 모든 유저 띄우기
 app.get("/users", async (req ,res)=>{
@@ -66,9 +71,9 @@ app.post("/auth", async(req, res)=>{
         const expires = new Date();
         expires.setHours(expires.getHours() + 12);
 
-        res.cookie("authorization",`Bearer + ${token}`,{
-            "expires" : expires,
-        })
+        // res.cookie("authorization",`Bearer + ${token}`,{
+        //     "expires" : expires,
+        // })
         res.status(200).send({ "token" : token });
     }
 })
@@ -76,13 +81,29 @@ app.post("/auth", async(req, res)=>{
 const authMiddleware = require("./middlewares/auth-middleware.js");
 
 // 인증 성공시 /me 경로에 내 정보 전달
-app.get("users/me", authMiddleware, async (req, res)=>{
-    res.send({ user : res.locals.user})
+app.post("/users/me", authMiddleware, async (req, res)=>{
+    res.send({ user : res.locals.user })
 })
 
 //상품 생성
 app.post("/goods", authMiddleware, async (req, res)=> {
-    const good = req.body;
+    const { productName, content, status} = req.body;
+    
+    const {authorization} = req.headers;
+    const [authType, authToken] = authorization.split(" ");
+    const { userId } = jwt.verify(authToken, "sparta-secret-key");
+
+    const newGood = { 
+        productName : productName,
+        content : content,
+        status : status,
+        userId : userId
+    }
+
+    const good = await Goods.build(newGood);
+    await good.save();
+     // const user = awiat User.create(newUser);
+    res.status(201).send({ newGood} )
 })
 
 
