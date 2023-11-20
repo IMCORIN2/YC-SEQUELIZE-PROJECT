@@ -16,7 +16,7 @@ module.exports = {
         type: Sequelize.STRING
       },
       status: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       userId: {
         type: Sequelize.STRING
@@ -33,17 +33,17 @@ module.exports = {
       }
     })
     // user table의 nickName 추가
-    await queryInterface.addColumn(
-      "Goods",
-      "fk_nickName",
-      {
-        type : Sequelize.STRING,
-        references: {
-          model: "Users",
-          key: "nickname"
-        }
-      }
-    );
+    // await queryInterface.addColumn(
+    //   "Goods",
+    //   "fk_nickName",
+    //   {
+    //     type : Sequelize.STRING,
+    //     references: {
+    //       model: "User",
+    //       key: "nickname"
+    //     }
+    //   }
+    // );
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Goods');

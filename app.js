@@ -95,16 +95,19 @@ app.post("/goods", authMiddleware, async (req, res)=> {
     const decoded = jwt.verify(authToken, "sparta-secret-key");
 
     const productStatus = ["판매중", "판매완료"];
-
+    
     if(!productStatus.includes(status)) {
         res.status(400).send({ message : "잘못된 상품 상태입니다. 판매중 혹은 판매완료로 등록하세요."})
         return;
     }
+
+    const { nickname } = res.locals.user;
     const newGood = { 
         productName : productName,
         content : content,
         status : status,
-        userId : decoded.userId
+        userId : decoded.userId,
+        nickname : nickname
     }
 
     const good = await Goods.build(newGood);
@@ -225,12 +228,13 @@ app.delete("/goods/:id/:productId", authMiddleware, async (req, res)=>{
 app.get("/goods", async(req, res)=>{
     // 여기서 작성자명까지 표시해야 하는데 표시하려면 Table간의 Join이 필요하다.
     // Table Join 후에 QueryString으로 sort 항목을 받아서 정렬을 해주어야 한다.
-    const allGoods = await Goods.findAll({
-        include: [
-            { model: User, as: "user", attributes: ["nickName"] }
-        ],
-        order: [["createdAt", "DESC"]]
-    });
+    // const allGoods = await Goods.findAll({
+    //     include: [
+    //         { model: User, as: "user", attributes: ["nickName"] }
+    //     ],
+    //     order: [["createdAt", "DESC"]]
+    // });
+    const allGoods = await Goods.findAll();
 
     res.send(allGoods);
 })
