@@ -94,6 +94,12 @@ app.post("/goods", authMiddleware, async (req, res)=> {
     const [authType, authToken] = authorization.split(" ");
     const decoded = jwt.verify(authToken, "sparta-secret-key");
 
+    const productStatus = ["판매중", "판매완료"];
+
+    if(!productStatus.includes(status)) {
+        res.status(400).send({ message : "잘못된 상품 상태입니다. 판매중 혹은 판매완료로 등록하세요."})
+        return;
+    }
     const newGood = { 
         productName : productName,
         content : content,
@@ -111,26 +117,36 @@ app.post("/goods", authMiddleware, async (req, res)=> {
 app.put("/goods/:id/:productId", authMiddleware, async (req, res)=>{
     const { id, productId } = req.params;
     const newGoodInfo = req.body;
+    const { status } = req.body;
+
+    const productStatus = ["판매중", "판매완료"];
+
+    if(!productStatus.includes(status)) {
+        res.status(400).send({ message : "잘못된 상품 상태입니다. 판매중 혹은 판매완료로 등록하세요."})
+    }
 
     const {authorization} = req.headers;
     const [authType, authToken] = authorization.split(" ");
     const decoded = jwt.verify(authToken, "sparta-secret-key");
 
     const existGood = await Goods.findOne({ where : { id : productId } })
+
+    if(status)
     
     if(!existGood) {
         res.status(404).send({ message : "상품 조회에 실패하였습니다."})
         return;
     }
 
-    if(decoded.userId !== id) {
+    if(decoded.userId !== Number(id)) {
+
         res.status(404).send({ message : "사용자가 등록한 상품이 없습니다."})
+        return;
     } else {
         const updatedGood = await Goods.update(newGoodInfo, { where : { id : productId } });
-
-        res.status(200).send({ message : `${updatedGood[0]}번 상품이 정상적으로 수정되었습니다.`})
+        res.status(200).send({ message : `${productId}번 상품이 정상적으로 수정되었습니다.`})
     }
-    // 사용자의 id를 params로 받아오는게 아니라면 (/goods/:productId만 있다면)
+    // 사용자의 id를 params로 받아오는게 아니라면 (/goods/:productId만 있다면)(프론트에서 id값을 따로 넘겨주는게 아니라면?)
     // 그런데 이게 더 맞을듯? 왜냐하면 상품에서 작성한 사람을 직접 찾아오는거니까?
 
     // const good = await Goods.findOne({ where : { id : productId } });
@@ -171,12 +187,12 @@ app.delete("/goods/:id/:productId", authMiddleware, async (req, res)=>{
         return;
     }
 
-    if(decoded.userId !== id) {
+    if(decoded.userId !== Number(id)) {
         res.status(404).send({ message : "사용자가 등록한 상품이 없습니다."})
     } else {
         const deleteGood = await Goods.destroy({ where : { id : productId} });
 
-        res.status(200).send({ message : `${deleteGood}번 상품이 정상적으로 삭제되었습니다.`})
+        res.status(200).send({ message : `${productId}번 상품이 정상적으로 삭제되었습니다.`})
     }
     // 사용자의 id를 params로 받아오는게 아니라면 (/goods/:productId만 있다면)
     // 그런데 이게 더 맞을듯? 왜냐하면 상품에서 작성한 사람을 직접 찾아오는거니까?
