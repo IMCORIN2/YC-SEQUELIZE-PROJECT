@@ -131,6 +131,8 @@ app.put("/goods/:id/:productId", authMiddleware, async (req, res)=>{
         res.status(200).send({ message : `${updatedGood[0]}번 상품이 정상적으로 수정되었습니다.`})
     }
     // 사용자의 id를 params로 받아오는게 아니라면 (/goods/:productId만 있다면)
+    // 그런데 이게 더 맞을듯? 왜냐하면 상품에서 작성한 사람을 직접 찾아오는거니까?
+
     // const good = await Goods.findOne({ where : { id : productId } });
     // const id = good.userId;
     // const { productId } = req.params;
@@ -177,6 +179,8 @@ app.delete("/goods/:id/:productId", authMiddleware, async (req, res)=>{
         res.status(200).send({ message : `${deleteGood}번 상품이 정상적으로 삭제되었습니다.`})
     }
     // 사용자의 id를 params로 받아오는게 아니라면 (/goods/:productId만 있다면)
+    // 그런데 이게 더 맞을듯? 왜냐하면 상품에서 작성한 사람을 직접 찾아오는거니까?
+
     // const good = await Goods.findOne({ where : { id : productId } });
     // const id = good.userId;
     // const { productId } = req.params;
@@ -205,7 +209,12 @@ app.delete("/goods/:id/:productId", authMiddleware, async (req, res)=>{
 app.get("/goods", async(req, res)=>{
     // 여기서 작성자명까지 표시해야 하는데 표시하려면 Table간의 Join이 필요하다.
     // Table Join 후에 QueryString으로 sort 항목을 받아서 정렬을 해주어야 한다.
-    const allGoods = await Goods.findAll();
+    const allGoods = await Goods.findAll({
+        include: [
+            { model: Users, as: "user", attributes: ["nickName"] }
+        ],
+        order: [["createdAt", "DESC"]]
+    });
 
     res.send(allGoods);
 })
