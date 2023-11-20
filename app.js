@@ -100,7 +100,7 @@ app.post("/goods", authMiddleware, async (req, res)=> {
         status : status,
         userId : decoded.userId
     }
-    
+
     const good = await Goods.build(newGood);
     await good.save();
      // const user = awiat User.create(newUser);
