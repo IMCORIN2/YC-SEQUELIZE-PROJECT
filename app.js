@@ -227,7 +227,7 @@ app.get("/goods", async(req, res)=>{
     // Table Join 후에 QueryString으로 sort 항목을 받아서 정렬을 해주어야 한다.
     const allGoods = await Goods.findAll({
         include: [
-            { model: Users, as: "user", attributes: ["nickName"] }
+            { model: User, as: "user", attributes: ["nickName"] }
         ],
         order: [["createdAt", "DESC"]]
     });

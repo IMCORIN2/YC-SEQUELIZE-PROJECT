@@ -31,7 +31,19 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue : Sequelize.fn("now")
       }
-    });
+    })
+    // user table의 nickName 추가
+    await queryInterface.addColumn(
+      "Goods",
+      "fk_nickName",
+      {
+        type : Sequelize.STRING,
+        references: {
+          model: "Users",
+          key: "nickname"
+        }
+      }
+    );
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Goods');
